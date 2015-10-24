@@ -11,7 +11,8 @@ import argparse
 import shlex
 sys.path.append(os.path.dirname(__file__) + "/llvm3.6")
 import clang.cindex as cl
-cl.Config.set_library_file('/usr/lib/x86_64-linux-gnu/libclang-3.6.so')
+cl.Config.set_compatibility_check(False)
+cl.Config.set_library_file('/usr/lib/x86_64-linux-gnu/libclang-3.4.so.1')
 
 
 class PimplGenerator:
@@ -123,6 +124,24 @@ class PimplGenerator:
     def _get_token_str(sef, cursor):
         return ' '.join(map(lambda x:x.spelling, cursor.get_tokens()))
 
+    def _parse_argment(self, cursor):
+        arg_name = cursor.displayname
+        arg_sig = []
+        paren_count = 0
+        for t in cursor.get_tokens():
+            if t.spelling == '(':
+                paren_count += 1
+            elif t.spelling == ',' and paren_count == 0:
+                break
+            elif t.spelling == ')':
+                if paren_count == 0:
+                    break
+                else:
+                    paren_count -= 1
+
+            arg_sig.append(t.spelling)
+        return {'sig':' '.join(arg_sig), 'name':arg_name}
+
     def _parse_constructor(self, class_info, cursor):
         # print cursor.kind
 
@@ -132,18 +151,16 @@ class PimplGenerator:
             'args':[],
         }
 
-        dammy_count = 0
+        dummy_count = 0
         for c in cursor.get_children():
 
             if c.kind == cl.CursorKind.PARM_DECL:
-                arg_sig = self._get_token_str(c)
-                arg_sig = arg_sig.strip().strip(",)").strip()
-                arg_name = c.displayname
-                if arg_name == '':
-                    arg_name = self._dammy_var_prefix + str(dammy_count)
-                    arg_sig += ' ' + arg_name
-                    dammy_count += 1
-                func_info['args'].append({'sig':arg_sig, 'name':arg_name})
+                arg = self._parse_argment(c)
+                if arg['name'] == '':
+                    arg['name'] = self._dammy_var_prefix + str(dummy_count)
+                    arg['sig'] += ' ' + arg['name']
+                    dummy_count += 1
+                func_info['args'].append(arg)
 
             elif c.kind in {cl.CursorKind.TEMPLATE_TYPE_PARAMETER, cl.CursorKind.TEMPLATE_NON_TYPE_PARAMETER}:
                 targ_sig = self._get_token_str(c)
@@ -164,17 +181,15 @@ class PimplGenerator:
             'is_void': cursor.result_type.spelling == 'void',
         }
 
-        dammy_count = 0
+        dummy_count = 0
         for c in cursor.get_children():
             if c.kind == cl.CursorKind.PARM_DECL:
-                arg_sig = self._get_token_str(c)
-                arg_sig = arg_sig.strip().strip(",)").strip()
-                arg_name = c.displayname
-                if arg_name == '':
-                    arg_name = self._dammy_var_prefix + str(dammy_count)
-                    arg_sig += ' ' + arg_name
-                    dammy_count += 1
-                func_info['args'].append({'sig':arg_sig, 'name':arg_name})
+                arg = self._parse_argment(c)
+                if arg['name'] == '':
+                    arg['name'] = self._dammy_var_prefix + str(dummy_count)
+                    arg['sig'] += ' ' + arg['name']
+                    dummy_count += 1
+                func_info['args'].append(arg)
 
             elif c.kind in {cl.CursorKind.TEMPLATE_TYPE_PARAMETER, cl.CursorKind.TEMPLATE_NON_TYPE_PARAMETER}:
                 targ_sig = self._get_token_str(c)
