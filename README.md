@@ -1,6 +1,6 @@
 # pimpl cpp generator
 
-generate pimpl idiom code
+generate pimpl idiom code &nbsp;&nbsp; [![Build Status](https://travis-ci.org/notetau/pimpl-cpp-generator.svg?branch=master)](https://travis-ci.org/notetau/pimpl-cpp-generator)
 
 ## Install
 This command uses libclang. You need to install libclang.
