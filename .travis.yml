@@ -1,7 +1,13 @@
+sudo: required
+dist: trusty
+
 language: python
 python:
   - "2.7"
-  
-install:  "pip install nose"
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y libclang1
+  - pip install nose
 
 script: nosetests
