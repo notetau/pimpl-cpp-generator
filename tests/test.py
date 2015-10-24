@@ -68,4 +68,3 @@ def test_basic2():
 
 if __name__ == '__main__':
     test_basic2()
-    # pprint.pprint(answer, width=200)
