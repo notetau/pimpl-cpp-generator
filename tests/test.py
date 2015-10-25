@@ -12,6 +12,11 @@ from nose.tools import ok_, eq_
 
 BASE_DIR = os.path.dirname(__file__)
 
+def setup_module(module):
+    # static library path for travis ci (trusty)
+    pimplgen.cl.Config.set_compatibility_check(False)
+    pimplgen.cl.Config.set_library_file('/usr/lib/x86_64-linux-gnu/libclang-3.4.so.1')
+
 def check_info(command, answer):
     args = pimplgen.parse_args(command)
     generator =  pimplgen.PimplGenerator(args)

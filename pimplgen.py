@@ -11,9 +11,6 @@ import argparse
 import shlex
 sys.path.append(os.path.dirname(__file__) + "/llvm3.6")
 import clang.cindex as cl
-cl.Config.set_compatibility_check(False)
-cl.Config.set_library_file('/usr/lib/x86_64-linux-gnu/libclang-3.4.so.1')
-
 
 class PimplGenerator:
     def __init__(self, args):
@@ -322,10 +319,12 @@ def parse_args(args=None):
     parser = argparse.ArgumentParser(description='pimpl class generator')
     parser.add_argument('src_file', nargs='?', default='tests/cppsrc/basic1.cpp')
     parser.add_argument('-t', '--target-class', nargs='?', default='Basic2')
-    parser.add_argument('-v', '--dammy-var-prefix', nargs='?', default='pimplvar')
     parser.add_argument('-o', '--output-class', nargs='?', default='Basic2Wrap')
+    parser.add_argument('-l', '--libclang-path', nargs='?', default='')
+    parser.add_argument('-v', '--dammy-var-prefix', nargs='?', default='pimplvar')
     parser.add_argument('--pimpl-name', nargs='?', default='pimpl')
     parser.add_argument('--decl-with-def', action='store_true', default=False)
+
 
     if type(args) == str:
         args = shlex.split(args)
@@ -335,6 +334,13 @@ def parse_args(args=None):
 
 if __name__ == '__main__':
     args = parse_args()
+
+    cl.Config.set_compatibility_check(False)
+    if args.libclang_path != '':
+        cl.Config.set_library_file(args.libclang_path)
+    else:
+        # FIXME search libclang path
+        cl.Config.set_library_file('/usr/lib/x86_64-linux-gnu/libclang-3.4.so.1')
 
     generator = PimplGenerator(args)
     class_info = generator.parse()
