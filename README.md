@@ -38,7 +38,7 @@ class Sample {
 replace Sample to Sample_Impl
 
 ``` c++
-class Sample_Impl {
+class Sample::Sample_Impl {
     public:
       Sample_Impl();
       int do_public(int x);
