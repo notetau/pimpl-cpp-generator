@@ -11,9 +11,9 @@ On Ubuntu 15.04:
 ## Option
 
 | option | long option | description |
-| -- | ------ | -- |
+| --- | ------ | --- |
 | -t | --target-class | [class name] to change to pimpl holder class |
-| -i | --impl-class | [class name] implementation class (default: IMPL)
+| -i | --impl-class | [class name] implementation class (default: IMPL) |
 | -o | --output-class |  [class name] output class (default: the same name as --target-class) |
 | -v | --dammy-var-prefix | [var name] if a function declaration has no argument variable name, put dummy variable there (default: 'pimplvar') |
 | |  --pimpl-name |  [var name] name of pimpl pointer (default: 'pimpl') |
