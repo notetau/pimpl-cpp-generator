@@ -178,7 +178,24 @@ class PimplGenerator:
             'args':[],
             'is_void': cursor.result_type.spelling == 'void',
         }
+        def usr_parse(usr):
+            pos = usr.rfind('#')
+            if pos != -1:
+                try:
+                    n = int(usr[pos+1:])
+                    # hack: some version swap volatile and restrict,
+                    #       but restrict dont set at function
+                    # http://stackoverflow.com/questions/12026551/how-to-find-out-whether-a-member-function-is-const-or-volatile-with-libclang
+                    return {'const': n & 1 == 1,
+                            'volatile': n & 6 != 0, # hack
+                            'restrict': False }
+                except:
+                    pass
+            return {'const': False, 'volatile': False, 'restrict': False }
 
+        # print cl.conf.lib.clang_CXXMethod_isVirtual(cursor)
+
+        func_info.update(usr_parse(cursor.get_usr()))
         dummy_count = 0
         for c in cursor.get_children():
             if c.kind == cl.CursorKind.PARM_DECL:
@@ -210,6 +227,8 @@ class PimplGenerator:
             fcode += '    {0} {1}({2})'.format(finfo['result'], finfo['func_name'],
                 ', '.join(map(lambda x: x['sig'], finfo['args']))
             )
+            if finfo['const']: fcode += ' const'
+            if finfo['volatile']: fcode += ' volatile'
 
             if inline_def:
                 fcode += ' {\n'
@@ -279,13 +298,18 @@ class PimplGenerator:
                 fcode += 'template<{0}>\n'.format(
                     ', '.join(map(lambda x: x['sig'], finfo['template_args']))
                 )
-            fcode += '{0} {1}::{2}({3}) {{\n'.format(
+            def args_filter(arg): # ignore default value in definitions
+                return arg['sig'].split('=')[0].strip()
+            fcode += '{0} {1}::{2}({3}) '.format(
                                            finfo['result'],
                                            self._output_class,
                                            finfo['func_name'],
-                                           ', '.join(map(lambda x: x['sig'], finfo['args']))
+                                           ', '.join(map(args_filter, finfo['args']))
                                            )
-            fcode += '    '
+            if finfo['const']: fcode += 'const '
+            if finfo['volatile']: fcode += 'volatile '
+
+            fcode += '{\n    '
             if not finfo['is_void']: fcode += 'return '
             fcode += '{0}->{1}({2});\n'.format(self._pimpl_name,
                                               finfo['func_name'],
@@ -319,7 +343,7 @@ class PimplGenerator:
 def parse_args(args=None):
     parser = argparse.ArgumentParser(description='pimpl class generator')
     parser.add_argument('src_file', nargs='?', default='tests/cppsrc/basic1.cpp')
-    parser.add_argument('-t', '--target-class', nargs='?', default='Basic2')
+    parser.add_argument('-t', '--target-class', nargs='?', default='Basic4')
     parser.add_argument('-o', '--output-class', nargs='?', default=None)
     parser.add_argument('-i', '--impl-class', nargs='?', default='IMPL')
     parser.add_argument('-l', '--libclang-path', nargs='?', default='')

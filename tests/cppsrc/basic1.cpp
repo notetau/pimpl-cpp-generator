@@ -29,3 +29,11 @@ struct Basic3 {
     Basic3& operator=(Basic3&&);
     Basic3 operator +(const Basic3&);
 };
+
+struct Basic4 {
+  virtual int foo(float x);
+  virtual int foofoo(float x) = 0;
+  int bar() volatile;
+  int baz(char a) const;
+  double qux (void) volatile const { return 0.0; }
+};
