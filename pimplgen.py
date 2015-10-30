@@ -22,6 +22,7 @@ class PimplGenerator:
         self._output_class = args.output_class
         self._pimpl_name = args.pimpl_name
         self._decl_with_def = args.decl_with_def
+        self._impl_class = args.impl_class
 
         self.namespace = []
         self.class_info = None
@@ -250,7 +251,7 @@ class PimplGenerator:
             # create default constructor
             fcode += '    {0}()'.format(self._output_class)
             if inline_def:
-                fcode += ' : {0}(new {1}()) {{}}'.format(self._pimpl_name, self._target_class)
+                fcode += ' : {0}(new {1}()) {{}}'.format(self._pimpl_name, self._impl_class)
             else:
                 fcode += ';'
             fcode += '\n\n'
@@ -264,11 +265,11 @@ class PimplGenerator:
                     ', '.join(map(lambda x: x['sig'], finfo['template_args']))
                 )
             fcode += '{0}::{1}({2})'.format(self._output_class,
-                                            self._output_class,
+                                            finfo['func_name'],
                                            ', '.join(map(lambda x: x['sig'], finfo['args']))
                                            )
             fcode += ' : {0}(new {1}({2})) {{}}\n\n'.format(self._pimpl_name,
-                                                            finfo['func_name'],
+                                                            self._impl_class,
                                                             ', '.join(map(lambda x: x['name'], finfo['args']))
                                                             )
         fcode += '{0}::~{0}() {{ delete {1}; }}\n\n'.format(self._output_class, self._pimpl_name)
@@ -304,8 +305,8 @@ class PimplGenerator:
         code += self._gen_pimpl_constructor(class_info['constructor_info'], self._decl_with_def)
         code += self._gen_pimpl_func(class_info['func_info'], self._decl_with_def)
         code += 'private:\n'
-        code += '    class {0};\n'.format(self._target_class)
-        code += '    {0}* {1};\n'.format(self._target_class, self._pimpl_name)
+        code += '    class {0};\n'.format(self._impl_class)
+        code += '    {0}* {1};\n'.format(self._impl_class, self._pimpl_name)
         code += '};'
 
         #outside definitions
@@ -319,7 +320,8 @@ def parse_args(args=None):
     parser = argparse.ArgumentParser(description='pimpl class generator')
     parser.add_argument('src_file', nargs='?', default='tests/cppsrc/basic1.cpp')
     parser.add_argument('-t', '--target-class', nargs='?', default='Basic2')
-    parser.add_argument('-o', '--output-class', nargs='?', default='Basic2Wrap')
+    parser.add_argument('-o', '--output-class', nargs='?', default=None)
+    parser.add_argument('-i', '--impl-class', nargs='?', default='IMPL')
     parser.add_argument('-l', '--libclang-path', nargs='?', default='')
     parser.add_argument('-v', '--dammy-var-prefix', nargs='?', default='pimplvar')
     parser.add_argument('--pimpl-name', nargs='?', default='pimpl')
@@ -329,6 +331,8 @@ def parse_args(args=None):
     if type(args) == str:
         args = shlex.split(args)
     args = parser.parse_args(args)
+    if args.output_class == None:
+        args.output_class = args.target_class
     return args
 
 
