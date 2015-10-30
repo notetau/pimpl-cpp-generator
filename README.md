@@ -26,12 +26,12 @@ for example : sample.cpp
 
 ``` c++
 class Sample {
-    public:
-      Sample();
-      int do_public(int x);
-    private:
-      void do_private();
-  };
+public:
+    Sample();
+    int do_public(int x);
+private:
+    void do_private();
+};
 ```
 
 run
@@ -46,9 +46,10 @@ public:
     Sample();
 
     int do_public(int x);
+
 private:
     class Sample_Impl;
-    Sample* pimpl;
+    Sample_Impl* pimpl;
 };
 
 Sample::Sample() : pimpl(new Sample()) {}
