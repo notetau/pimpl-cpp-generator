@@ -194,7 +194,6 @@ class PimplGenerator:
             return {'const': False, 'volatile': False, 'restrict': False }
 
         # print cl.conf.lib.clang_CXXMethod_isVirtual(cursor)
-
         func_info.update(usr_parse(cursor.get_usr()))
         dummy_count = 0
         for c in cursor.get_children():
@@ -213,9 +212,20 @@ class PimplGenerator:
                 if targ_name == '':
                     raise Exception()
                 func_info['template_args'].append({'sig': targ_sig, 'name': targ_name})
-
+        
         # print func_info
         class_info['func_info'].append(func_info)
+
+    def _convert_selfclass(self, sigs):
+        if type(sigs) == list:
+            out_args = []
+            for sig in sigs:
+                newsig = [token.replace(self._target_class, self._output_class) for token in sig.split()]
+                out_args.append(' '.join(newsig))
+            return out_args
+        else:
+            newsig = [token.replace(self._target_class, self._output_class) for token in sigs.split()]
+            return ' '.join(newsig)
 
     def _gen_pimpl_func(self, func_info, inline_def=False):
         fcode = ''
@@ -224,9 +234,11 @@ class PimplGenerator:
                 fcode += '    template<{0}>\n'.format(
                     ', '.join(map(lambda x: x['sig'], finfo['template_args']))
                 )
-            fcode += '    {0} {1}({2})'.format(finfo['result'], finfo['func_name'],
-                ', '.join(map(lambda x: x['sig'], finfo['args']))
-            )
+            fcode += '    {0} {1}({2})'.format(
+                self._convert_selfclass(finfo['result']), 
+                finfo['func_name'], 
+                ', '.join(self._convert_selfclass(map(lambda x: x['sig'], finfo['args']))))
+            
             if finfo['const']: fcode += ' const'
             if finfo['volatile']: fcode += ' volatile'
 
@@ -243,7 +255,7 @@ class PimplGenerator:
                 fcode += ';'
             fcode += '\n\n'
         return fcode
-
+	 
     def _gen_pimpl_constructor(self, constructor_info, inline_def=False):
         fcode = ''
 
@@ -254,7 +266,7 @@ class PimplGenerator:
                 )
 
             fcode += '    {0}({1})'.format(self._output_class,
-                                             ', '.join(map(lambda x: x['sig'], finfo['args']))
+                                             ', '.join(self._convert_selfclass(map(lambda x: x['sig'], finfo['args'])))
                                              )
             if inline_def:
                 fcode += ' : {0}(new {1}({2})) {{}}'.format(self._pimpl_name,
@@ -278,14 +290,15 @@ class PimplGenerator:
 
     def _gen_pimpl_def(self, class_info):
         fcode = ''
+        # generate constructors
         for finfo in class_info['constructor_info']:
             if len(finfo['template_args']) != 0:
                 fcode += '    template<{0}>\n'.format(
                     ', '.join(map(lambda x: x['sig'], finfo['template_args']))
                 )
             fcode += '{0}::{1}({2})'.format(self._output_class,
-                                            finfo['func_name'],
-                                           ', '.join(map(lambda x: x['sig'], finfo['args']))
+                                            self._output_class, 
+                                           ', '.join(self._convert_selfclass(map(lambda x: x['sig'], finfo['args'])))
                                            )
             fcode += ' : {0}(new {1}({2})) {{}}\n\n'.format(self._pimpl_name,
                                                             self._impl_class,
@@ -293,6 +306,7 @@ class PimplGenerator:
                                                             )
         fcode += '{0}::~{0}() {{ delete {1}; }}\n\n'.format(self._output_class, self._pimpl_name)
 
+        # generate member functions
         for finfo in class_info['func_info']:
             if len(finfo['template_args']) != 0:
                 fcode += 'template<{0}>\n'.format(
@@ -301,10 +315,10 @@ class PimplGenerator:
             def args_filter(arg): # ignore default value in definitions
                 return arg['sig'].split('=')[0].strip()
             fcode += '{0} {1}::{2}({3}) '.format(
-                                           finfo['result'],
+                                           self._convert_selfclass(finfo['result']),
                                            self._output_class,
                                            finfo['func_name'],
-                                           ', '.join(map(args_filter, finfo['args']))
+                                           ', '.join(self._convert_selfclass(map(args_filter, finfo['args'])))
                                            )
             if finfo['const']: fcode += 'const '
             if finfo['volatile']: fcode += 'volatile '
