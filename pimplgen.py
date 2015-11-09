@@ -286,6 +286,14 @@ class PimplGenerator:
             else:
                 fcode += ';'
             fcode += '\n\n'
+
+        # destructor
+        fcode += '    ~{0}()'.format(self._output_class)
+        if inline_def:
+            fcode += ' {{ delete {0}; }}'.format(self._pimpl_name)
+        else:
+            fcode += ';'
+        fcode += '\n\n'
         return fcode
 
     def _gen_pimpl_def(self, class_info):
@@ -304,6 +312,7 @@ class PimplGenerator:
                                                             self._impl_class,
                                                             ', '.join(map(lambda x: x['name'], finfo['args']))
                                                             )
+        # generate destructor
         fcode += '{0}::~{0}() {{ delete {1}; }}\n\n'.format(self._output_class, self._pimpl_name)
 
         # generate member functions
