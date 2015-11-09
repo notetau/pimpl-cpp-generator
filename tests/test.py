@@ -17,7 +17,6 @@ def setup_module(module):
     pimplgen.cl.Config.set_compatibility_check(False)
     pimplgen.cl.Config.set_library_file('/usr/lib/x86_64-linux-gnu/libclang-3.4.so.1')
 
-
 TEST_PARAMETER = [
     # 0
     ({
@@ -68,6 +67,34 @@ TEST_PARAMETER = [
                    {'args': [{'name': 'a', 'sig': 'char a'}], 'const': True, 'func_name': 'baz', 'is_void': False, 'restrict': False, 'result': 'int', 'template_args': [], 'volatile': False},
                    {'args': [], 'const': True, 'func_name': 'qux', 'is_void': False, 'restrict': False, 'result': 'double', 'template_args': [], 'volatile': True}],
      'template_args': []}
+    ),
+    # 4
+    ( {
+     'src_file': BASE_DIR + '/cppsrc/basic1.cpp',
+     'target_class': 'a::Basic5',
+     'output_class': 'TBasic5'
+    },
+    {'class_decl': 'struct',
+     'class_name': 'Basic5',
+     'class_sig': 'struct Basic5',
+     'constructor_info': [],
+     'func_info': [{'args': [{'name': 'x', 'sig': 'float x'}], 'const': False, 'func_name': 'foo', 'is_void': True, 'restrict': False, 'result': 'void', 'template_args': [], 'volatile': False}],
+     'template_args': []}
+    ),
+    # 5
+    ( {
+     'src_file': BASE_DIR + '/cppsrc/basic1.cpp',
+     'target_class': 'a::b::Basic6',
+     'output_class': 'TBasic6'
+    },
+    {'class_decl': 'struct',
+     'class_name': 'Basic6',
+     'class_sig': 'struct Basic6',
+     'constructor_info': [],
+     'func_info': [{'args': [{'name': 'x', 'sig': 'int x'}], 'const': False, 'func_name': 'foo', 'is_void': True, 'restrict': False, 'result': 'void', 'template_args': [], 'volatile': False},
+                   {'args': [{'name': 'b5', 'sig': 'Basic5 & b5'}], 'const': False, 'func_name': 'bar', 'is_void': True, 'restrict': False, 'result': 'void', 'template_args': [], 'volatile': False},
+                   {'args': [{'name': 'other', 'sig': 'const Basic6 & other'}], 'const': False, 'func_name': 'operator=', 'is_void': False, 'restrict': False, 'result': 'a::b::Basic6 &', 'template_args': [], 'volatile': False}],
+     'template_args': []}
     )
 ]
 
@@ -82,8 +109,8 @@ def check_pattern(idx):
 def test_0() : check_pattern(0)
 def test_1() : check_pattern(1)
 def test_3() : check_pattern(3)
-
-
+def test_4() : check_pattern(4)
+def test_5() : check_pattern(5)
 
 def run_pattern(idx):
     pattern = TEST_PARAMETER[idx]
@@ -101,4 +128,4 @@ def run_pattern(idx):
 
 if __name__ == '__main__':
     setup_module(None)
-    run_pattern(3)
+    run_pattern(5)

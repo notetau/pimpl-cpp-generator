@@ -37,3 +37,17 @@ struct Basic4 {
   int baz(char a) const;
   double qux (void) volatile const { return 0.0; }
 };
+
+namespace a {
+    struct Basic5 {
+        void foo(float x);
+    };
+    namespace b {
+        struct Basic6 {
+            void foo(int x);
+            void bar(Basic5& b5);
+            Basic6& operator=(const Basic6& other);
+        };
+    }   
+}
+
