@@ -15,11 +15,19 @@ import clang.cindex as cl
 class PimplGenerator:
     def __init__(self, args):
         self._src_file = args.src_file
+        #self._target_class = args.target_class
+        #if self._target_class.startswith('::'):
+        #    self._target_class = self._target_class[2:]
         self._target_class = args.target_class
-        if self._target_class.startswith('::'):
-            self._target_class = self._target_class[2:]
+        self._target_class_fullname = args.target_class
+        idx = self._target_class_fullname.rfind('::')
+        if idx != -1:
+            self._target_class = self._target_class[idx+2:]
         self._dammy_var_prefix = args.dammy_var_prefix
         self._output_class = args.output_class
+        idx = self._output_class.rfind('::')
+        if idx != -1:
+            self._output_class = self._output_class[idx+2:]
         self._pimpl_name = args.pimpl_name
         self._decl_with_def = args.decl_with_def
         self._impl_class = args.impl_class
@@ -53,7 +61,7 @@ class PimplGenerator:
         elif cursor.kind in {
                 cl.CursorKind.CLASS_DECL, cl.CursorKind.STRUCT_DECL, cl.CursorKind.CLASS_TEMPLATE
                 }:
-            if self._target_class == self._get_fullname(cursor.displayname):
+            if self._target_class_fullname == self._get_fullname(cursor.displayname):
                 if not found:
                     self._parse_class(cursor)
                     found = True
@@ -217,15 +225,17 @@ class PimplGenerator:
         class_info['func_info'].append(func_info)
 
     def _convert_selfclass(self, sigs):
+        def gen(tokens):
+            tokens = [self._target_class if token == self._target_class_fullname else token for token in tokens]
+            tokens = [self._output_class if token == self._target_class else token for token in tokens]
+            return ' '.join(tokens)
         if type(sigs) == list:
             out_args = []
             for sig in sigs:
-                newsig = [token.replace(self._target_class, self._output_class) for token in sig.split()]
-                out_args.append(' '.join(newsig))
+                out_args.append(gen(sig.split()))
             return out_args
         else:
-            newsig = [token.replace(self._target_class, self._output_class) for token in sigs.split()]
-            return ' '.join(newsig)
+            return gen(sigs.split())
 
     def _gen_pimpl_func(self, func_info, inline_def=False):
         fcode = ''
